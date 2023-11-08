@@ -154,6 +154,9 @@ debug "POST_CREATE_COMMAND: ${POST_CREATE_COMMAND}"
 ENVS=$(echo "$CONFIG" | jq -r '.remoteEnv | to_entries? | map("-e \(.key)=\(.value)")? | join(" ")')
 debug "ENVS: ${ENVS}"
 
+RUNARGS=$(echo "$CONFIG" | jq -r '.runArgs'[])
+debug "RUNARGS: ${RUNARGS}"
+
 TARGET_PROJECT_ROOT="/workspace/$(basename $PROJECT_ROOT)"
 debug "TARGET_PROJECT_ROOT: ${TARGET_PROJECT_ROOT}"
 
@@ -204,10 +207,10 @@ if [ $SHOULD_RUN_POST_ACTIONS ]; then
         \$sudo chown $REMOTE_USER:$REMOTE_USER -R ~$REMOTE_USER $TARGET_PROJECT_ROOT; \
     fi;"
 
-    docker run -it $DOCKER_OPTS $PORTS $ENVS $MOUNT -w "$WORK_DIR" "$DOCKER_TAG" "$SHELL" -c "$CONFIGURE_USER_ID"
-    docker run -it $DOCKER_OPTS $PORTS $ENVS $MOUNT -w "$WORK_DIR" "$DOCKER_TAG" $POST_CREATE_COMMAND
+    docker run -it $DOCKER_OPTS $PORTS $ENVS $MOUNT $RUNARGS -w "$WORK_DIR" "$DOCKER_TAG" "$SHELL" -c "$CONFIGURE_USER_ID"
+    docker run -it $DOCKER_OPTS $PORTS $ENVS $MOUNT $RUNARGS -w "$WORK_DIR" "$DOCKER_TAG" $POST_CREATE_COMMAND
 fi
 
 # shellcheck disable=SC2086
 
-docker run -it $DOCKER_OPTS $PORTS $ENVS $MOUNT -w "$WORK_DIR" "$DOCKER_TAG" "$SHELL"
+docker run -it $DOCKER_OPTS $PORTS $ENVS $MOUNT $RUNARGS -w "$WORK_DIR" "$DOCKER_TAG" "$SHELL"
