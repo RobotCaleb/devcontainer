@@ -105,6 +105,13 @@ CONFIG="$(echo "$CONFIG" | sed "s#\${localWorkspaceFolder}#$localWorkspaceFolder
 
 # Remove trailing comma's with sed
 CONFIG=$(echo "$CONFIG" | grep -v // | sed -Ez 's#,([[:space:]]*[]}])#\1#gm')
+
+# Lookup localEnv replacements
+# First strip the localEnv
+CONFIG="$(echo "$CONFIG" | sed "s#\${localEnv:\([^}]\+\)}#$\1#g")"
+# Then substitute in values from the environment
+CONFIG="$(echo "$CONFIG" | envsubst)"
+
 debug "CONFIG: \n${CONFIG}"
 
 
