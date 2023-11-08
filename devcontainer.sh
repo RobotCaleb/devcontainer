@@ -95,13 +95,14 @@ fi
 CONFIG="$(cat "$CONFIG_DIR/$CONFIG_FILE")"
 
 # Replacing variables in the config file
-localWorkspaceFolderBasename="$(basename "$(realpath "$CONFIG_DIR/..")")"
+localWorkspaceFolderBasename="$(readlink -f "$CONFIG_DIR/..")"
 # shellcheck disable=SC2001
 CONFIG="$(echo "$CONFIG" | sed "s#\${localWorkspaceFolderBasename}#$localWorkspaceFolderBasename#g")"
 
-localWorkspaceFolder="$(dirname "$localWorkspaceFolderBasename")"
+localWorkspaceFolder="$(readlink -f "$localWorkspaceFolderBasename")"
 # shellcheck disable=SC2001
 CONFIG="$(echo "$CONFIG" | sed "s#\${localWorkspaceFolder}#$localWorkspaceFolder#g")"
+debug "LOCALWORKSPACEFOLDER: ${localWorkspaceFolder}"
 
 # Remove trailing comma's with sed
 CONFIG=$(echo "$CONFIG" | grep -v // | sed -Ez 's#,([[:space:]]*[]}])#\1#gm')
@@ -157,13 +158,13 @@ debug "ENVS: ${ENVS}"
 RUNARGS=$(echo "$CONFIG" | jq -r '.runArgs'[])
 debug "RUNARGS: ${RUNARGS}"
 
-TARGET_PROJECT_ROOT="/workspace/$(basename $PROJECT_ROOT)"
+TARGET_PROJECT_ROOT="/workspaces/$(basename $PROJECT_ROOT)"
 debug "TARGET_PROJECT_ROOT: ${TARGET_PROJECT_ROOT}"
 
 MOUNT="${MOUNT} --mount type=bind,source=${PROJECT_ROOT},target=${TARGET_PROJECT_ROOT}"
 debug "MOUNT: $MOUNT"
 
-WORK_DIR=$(echo "$TARGET_PROJECT_ROOT${PWD#"$PROJECT_ROOT"}")
+WORK_DIR=$(echo "${TARGET_PROJECT_ROOT}")
 debug "WORK_DIR: ${WORK_DIR}"
 
 echo "Building and starting container"
