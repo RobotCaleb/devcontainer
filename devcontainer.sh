@@ -164,6 +164,9 @@ debug "TARGET_PROJECT_ROOT: ${TARGET_PROJECT_ROOT}"
 MOUNT="${MOUNT} --mount type=bind,source=${PROJECT_ROOT},target=${TARGET_PROJECT_ROOT}"
 debug "MOUNT: $MOUNT"
 
+MOUNTS="$(echo "$CONFIG" | jq -r '.mounts[] | capture("source=(?<source>[^,]+),target=(?<target>[^,]+),type=(?<type>[^,]+),consistency=(?<consistency>[^,]+)") | "--mount type=\(.type),source=\(.source),target=\(.target),consistency=\(.consistency)"')"
+debug "MOUNTS: ${MOUNTS}"
+
 WORK_DIR=$(echo "${TARGET_PROJECT_ROOT}")
 debug "WORK_DIR: ${WORK_DIR}"
 
@@ -208,10 +211,10 @@ if [ $SHOULD_RUN_POST_ACTIONS ]; then
         \$sudo chown $REMOTE_USER:$REMOTE_USER -R ~$REMOTE_USER $TARGET_PROJECT_ROOT; \
     fi;"
 
-    docker run -it $DOCKER_OPTS $PORTS $ENVS $MOUNT $RUNARGS -w "$WORK_DIR" "$DOCKER_TAG" "$SHELL" -c "$CONFIGURE_USER_ID"
-    docker run -it $DOCKER_OPTS $PORTS $ENVS $MOUNT $RUNARGS -w "$WORK_DIR" "$DOCKER_TAG" $POST_CREATE_COMMAND
+    docker run -it $DOCKER_OPTS $PORTS $ENVS $MOUNT $MOUNTS $RUNARGS -w "$WORK_DIR" "$DOCKER_TAG" "$SHELL" -c "$CONFIGURE_USER_ID"
+    docker run -it $DOCKER_OPTS $PORTS $ENVS $MOUNT $MOUNTS $RUNARGS -w "$WORK_DIR" "$DOCKER_TAG" $POST_CREATE_COMMAND
 fi
 
 # shellcheck disable=SC2086
 
-docker run -it $DOCKER_OPTS $PORTS $ENVS $MOUNT $RUNARGS -w "$WORK_DIR" "$DOCKER_TAG" "$SHELL"
+docker run -it $DOCKER_OPTS $PORTS $ENVS $MOUNT $MOUNTS $RUNARGS -w "$WORK_DIR" "$DOCKER_TAG" "$SHELL"
